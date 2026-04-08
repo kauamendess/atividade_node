@@ -1,0 +1,2060 @@
+<!doctype html>
+<html lang="pt-BR" id="html-root">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="10" />
+    <title>MARKET PULSE — Cotações ao Vivo</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ── DARK THEME (default) ── */
+      :root {
+        --bg: #060810;
+        --surface: #0c1120;
+        --border: #1a2540;
+        --accent-green: #00ffa3;
+        --accent-amber: #ffb800;
+        --accent-red: #ff3d6e;
+        --accent-blue: #4d9fff;
+        --text: #c8d8f0;
+        --text-dim: #4a5e80;
+        --logo-color: #ffffff;
+        --grid-color: rgba(0, 255, 163, 0.03);
+        --scan-color: rgba(0, 0, 0, 0.08);
+        --mono: "Share Tech Mono", monospace;
+        --sans: "Syne", sans-serif;
+      }
+
+      /* ── LIGHT THEME ── */
+      body.light {
+        --bg: #eef2fb;
+        --surface: #ffffff;
+        --border: #ccd6ea;
+        --text: #162040;
+        --text-dim: #7a90b5;
+        --logo-color: #0d1a38;
+        --grid-color: rgba(20, 50, 120, 0.04);
+        --scan-color: rgba(0, 0, 0, 0.015);
+      }
+      body.light .card {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+      }
+      body.light .modal {
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+      }
+      body.light .site-card {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      body.light .ticker-wrap {
+        background: rgba(0, 80, 200, 0.03);
+      }
+      body.light .table-wrap {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      body.light thead tr {
+        background: rgba(0, 80, 200, 0.04);
+      }
+      body.light td {
+        border-bottom: 1px solid rgba(180, 200, 230, 0.5);
+      }
+      body.light .modal-overlay {
+        background: rgba(14, 26, 60, 0.75);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--mono);
+        min-height: 100vh;
+        overflow-x: hidden;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--grid-color) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          var(--scan-color) 2px,
+          var(--scan-color) 4px
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px 60px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ── HEADER ── */
+      header {
+        padding: 28px 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .logo {
+        font-family: var(--sans);
+        font-weight: 800;
+        font-size: 1.6rem;
+        letter-spacing: -0.02em;
+        color: var(--logo-color);
+        transition: color 0.3s;
+      }
+      .logo span {
+        color: var(--accent-green);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .live-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        margin-right: 4px;
+      }
+      .live-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.72rem;
+        color: var(--accent-green);
+        letter-spacing: 0.12em;
+      }
+      .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-green);
+        box-shadow: 0 0 8px var(--accent-green);
+        animation: blink 1.4s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+      #last-update {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+      }
+
+      /* ── ICON TOGGLE BUTTONS ── */
+      .icon-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-dim);
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        cursor: pointer;
+        letter-spacing: 0.07em;
+        transition: all 0.22s;
+        white-space: nowrap;
+      }
+      .icon-btn:hover {
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+        background: rgba(77, 159, 255, 0.07);
+      }
+      .icon-btn .btn-icon {
+        font-size: 1rem;
+        line-height: 1;
+      }
+      #theme-btn.is-light {
+        border-color: var(--accent-amber);
+        color: var(--accent-amber);
+      }
+      #lang-btn.is-en {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+      }
+
+      /* ── TICKER ── */
+      .ticker-wrap {
+        overflow: hidden;
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+        background: rgba(0, 255, 163, 0.02);
+        transition: background 0.3s;
+      }
+      .ticker {
+        display: flex;
+        width: max-content;
+        animation: scroll-ticker 30s linear infinite;
+      }
+      .ticker-item {
+        padding: 0 28px;
+        font-size: 0.78rem;
+        white-space: nowrap;
+        color: var(--text-dim);
+        border-right: 1px solid var(--border);
+      }
+      .ticker-item .t-name {
+        color: var(--text);
+      }
+      .ticker-item .t-up {
+        color: var(--accent-green);
+      }
+      .ticker-item .t-down {
+        color: var(--accent-red);
+      }
+      @keyframes scroll-ticker {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ── CONTROLS ── */
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 24px 0 18px;
+        flex-wrap: wrap;
+      }
+      .controls-label {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+      }
+      .btn-group {
+        display: flex;
+        gap: 6px;
+      }
+      .btn-base {
+        padding: 6px 16px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-dim);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        transition: all 0.2s;
+      }
+      .btn-base:hover {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+      }
+      .btn-base.active {
+        background: var(--accent-green);
+        color: var(--bg);
+        border-color: var(--accent-green);
+        box-shadow: 0 0 16px rgba(0, 255, 163, 0.3);
+      }
+      .refresh-btn {
+        margin-left: auto;
+        padding: 6px 18px;
+        border-radius: 4px;
+        border: 1px solid var(--accent-blue);
+        background: transparent;
+        color: var(--accent-blue);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .refresh-btn:hover {
+        background: var(--accent-blue);
+        color: var(--bg);
+      }
+      .refresh-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .spin {
+        display: inline-block;
+      }
+      .spinning {
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── SECTION TITLE ── */
+      .section-title {
+        font-family: var(--sans);
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        padding: 20px 0 12px;
+        border-top: 1px solid var(--border);
+        margin-top: 8px;
+        transition: color 0.3s;
+      }
+
+      /* ── CARDS ── */
+      .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 22px 20px 18px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition:
+          border-color 0.25s,
+          transform 0.25s,
+          background 0.3s,
+          box-shadow 0.25s;
+        animation: fadeIn 0.5s ease both;
+      }
+      .card:hover {
+        border-color: var(--card-accent, var(--accent-green));
+        transform: translateY(-2px);
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: var(--card-accent, var(--accent-green));
+      }
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at top left,
+          rgba(var(--card-accent-rgb, 0, 255, 163), 0.05) 0%,
+          transparent 60%
+        );
+        pointer-events: none;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .card-hint {
+        position: absolute;
+        bottom: 10px;
+        right: 12px;
+        font-size: 0.6rem;
+        color: var(--text-dim);
+        letter-spacing: 0.08em;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .card:hover .card-hint {
+        opacity: 1;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .card-flag-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .card-flag {
+        font-size: 1.4rem;
+        line-height: 1;
+      }
+      .card-code {
+        font-family: var(--sans);
+        font-weight: 800;
+        font-size: 1rem;
+        color: var(--logo-color);
+        letter-spacing: -0.01em;
+        transition: color 0.3s;
+      }
+      .card-fullname {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        margin-top: 1px;
+      }
+      .card-badge {
+        font-size: 0.62rem;
+        padding: 2px 8px;
+        border-radius: 3px;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+      .badge-fiat {
+        background: rgba(77, 159, 255, 0.15);
+        color: var(--accent-blue);
+      }
+      .badge-crypto {
+        background: rgba(255, 184, 0, 0.15);
+        color: var(--accent-amber);
+      }
+      .card-value {
+        font-size: 1.55rem;
+        color: var(--logo-color);
+        letter-spacing: -0.01em;
+        margin-bottom: 6px;
+        transition: color 0.3s;
+      }
+      .card-value .currency-sym {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+        margin-right: 2px;
+      }
+      .card-change {
+        font-size: 0.78rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .change-up {
+        color: var(--accent-green);
+      }
+      .change-down {
+        color: var(--accent-red);
+      }
+      .change-neutral {
+        color: var(--text-dim);
+      }
+      .card-extra {
+        display: flex;
+        gap: 16px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+      .card-stat {
+        flex: 1;
+      }
+      .stat-label {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        letter-spacing: 0.08em;
+        margin-bottom: 2px;
+      }
+      .stat-value {
+        font-size: 0.82rem;
+        color: var(--text);
+      }
+
+      /* skeleton */
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          var(--surface) 25%,
+          var(--border) 50%,
+          var(--surface) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+        border-radius: 4px;
+        height: 1em;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* ── ERROR ── */
+      .error-msg {
+        background: rgba(255, 61, 110, 0.1);
+        border: 1px solid rgba(255, 61, 110, 0.3);
+        border-radius: 8px;
+        padding: 18px 20px;
+        color: var(--accent-red);
+        font-size: 0.82rem;
+        display: none;
+      }
+
+      /* ── TABLE ── */
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 32px;
+        transition: border-color 0.3s;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+      }
+      thead tr {
+        background: rgba(0, 255, 163, 0.04);
+      }
+      th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 0.66rem;
+        letter-spacing: 0.12em;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      td {
+        padding: 13px 16px;
+        border-bottom: 1px solid rgba(26, 37, 64, 0.4);
+        white-space: nowrap;
+        color: var(--text);
+      }
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr:hover td {
+        background: rgba(0, 0, 0, 0.03);
+      }
+      td.up {
+        color: var(--accent-green);
+      }
+      td.down {
+        color: var(--accent-red);
+      }
+      td.mono {
+        font-family: var(--mono);
+      }
+
+      /* ── MODAL ── */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 6, 16, 0.88);
+        backdrop-filter: blur(6px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+      }
+      .modal-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--modal-accent, var(--border));
+        border-radius: 12px;
+        max-width: 560px;
+        width: 100%;
+        max-height: 88vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow:
+          0 0 60px rgba(0, 0, 0, 0.6),
+          0 0 30px rgba(var(--modal-accent-rgb, 0, 255, 163), 0.08);
+        transform: translateY(20px) scale(0.97);
+        transition:
+          transform 0.25s ease,
+          background 0.3s;
+      }
+      .modal-overlay.open .modal {
+        transform: translateY(0) scale(1);
+      }
+      .modal::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          rgb(var(--modal-accent-rgb, 0, 255, 163)),
+          transparent
+        );
+        border-radius: 12px 12px 0 0;
+      }
+      .modal-header {
+        padding: 24px 24px 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .modal-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .modal-flag {
+        font-size: 2.2rem;
+        line-height: 1;
+      }
+      .modal-code {
+        font-family: var(--sans);
+        font-weight: 800;
+        font-size: 1.6rem;
+        color: var(--logo-color);
+        transition: color 0.3s;
+      }
+      .modal-fullname {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 2px;
+      }
+      .modal-close {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        font-size: 1rem;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.18s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-close:hover {
+        border-color: var(--accent-red);
+        color: var(--accent-red);
+      }
+      .modal-body {
+        padding: 20px 24px 28px;
+      }
+      .modal-desc {
+        font-size: 0.84rem;
+        line-height: 1.7;
+        color: var(--text);
+        margin-bottom: 22px;
+        border-left: 2px solid rgb(var(--modal-accent-rgb, 0, 255, 163));
+        padding-left: 14px;
+      }
+      .modal-section-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        font-family: var(--sans);
+      }
+      .sites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+      .site-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: block;
+      }
+      .site-card:hover {
+        border-color: rgb(var(--modal-accent-rgb, 0, 255, 163));
+        background: rgba(var(--modal-accent-rgb, 0, 255, 163), 0.06);
+        transform: translateY(-2px);
+      }
+      .site-name {
+        font-size: 0.82rem;
+        color: var(--logo-color);
+        font-weight: 600;
+        margin-bottom: 3px;
+        transition: color 0.3s;
+      }
+      .site-desc {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        line-height: 1.4;
+      }
+      .site-tag {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 0.58rem;
+        padding: 1px 6px;
+        border-radius: 3px;
+        letter-spacing: 0.06em;
+      }
+      .tag-br {
+        background: rgba(0, 210, 120, 0.15);
+        color: #00d278;
+      }
+      .tag-int {
+        background: rgba(77, 159, 255, 0.15);
+        color: var(--accent-blue);
+      }
+      .tag-top {
+        background: rgba(255, 184, 0, 0.15);
+        color: var(--accent-amber);
+      }
+      .modal-warning {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 14px;
+        line-height: 1.5;
+      }
+      .modal-warning strong {
+        color: var(--accent-amber);
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        text-align: center;
+        padding: 24px 0;
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        border-top: 1px solid var(--border);
+        letter-spacing: 0.06em;
+      }
+      footer a {
+        color: var(--accent-blue);
+        text-decoration: none;
+      }
+
+      @media (max-width: 640px) {
+        .logo {
+          font-size: 1.2rem;
+        }
+        .card-value {
+          font-size: 1.25rem;
+        }
+        .modal-body {
+          padding: 16px 18px 22px;
+        }
+        .modal-header {
+          padding: 18px 18px 0;
+        }
+        .icon-btn .btn-label {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- HEADER -->
+      <header>
+        <div class="logo">MARKET<span>PULSE</span></div>
+        <div class="header-right">
+          <div class="live-info">
+            <div class="live-badge">
+              <span class="live-dot"></span>
+              <span data-i18n="live">DADOS AO VIVO</span>
+            </div>
+            <div id="last-update">Aguardando dados…</div>
+          </div>
+          <!-- Language toggle -->
+          <button class="icon-btn" id="lang-btn" onclick="toggleLang()">
+            <span class="btn-icon">🌐</span>
+            <span class="btn-label" id="lang-label">EN</span>
+          </button>
+          <!-- Theme toggle -->
+          <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">
+            <span class="btn-icon" id="theme-icon">☀️</span>
+            <span class="btn-label" id="theme-label">Light</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TICKER -->
+      <div class="ticker-wrap">
+        <div class="ticker" id="ticker">
+          <div class="ticker-item" data-i18n="tickerLoading">
+            Carregando cotações…
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="controls">
+        <span class="controls-label" data-i18n="base">BASE:</span>
+        <div class="btn-group">
+          <button class="btn-base active" data-base="BRL">BRL</button>
+          <button class="btn-base" data-base="USD">USD</button>
+          <button class="btn-base" data-base="EUR">EUR</button>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">
+          <span class="spin" id="spin-icon">↻</span>
+          <span data-i18n="refresh">Atualizar</span>
+        </button>
+      </div>
+
+      <!-- ERROR -->
+      <div class="error-msg" id="error-msg"></div>
+
+      <!-- FIAT -->
+      <div class="section-title" data-i18n="fiatTitle">Moedas Fiduciárias</div>
+      <div class="cards-grid" id="fiat-cards"></div>
+
+      <!-- CRYPTO -->
+      <div class="section-title" data-i18n="cryptoTitle">Criptomoedas</div>
+      <div class="cards-grid" id="crypto-cards"></div>
+
+      <!-- TABLE -->
+      <div class="section-title" data-i18n="tableTitle">Tabela de Cotações</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="thAsset">ATIVO</th>
+              <th data-i18n="thName">NOME COMPLETO</th>
+              <th data-i18n="thPrice">PREÇO</th>
+              <th data-i18n="th24h">VAR. 24H</th>
+              <th data-i18n="thLow">MÍN 24H</th>
+              <th data-i18n="thHigh">MÁX 24H</th>
+              <th data-i18n="thType">TIPO</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr>
+              <td
+                colspan="7"
+                style="
+                  text-align: center;
+                  color: var(--text-dim);
+                  padding: 28px;
+                "
+                data-i18n="loading"
+              >
+                Carregando…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- /container -->
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+      <div class="modal" id="modal-box">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="modal-flag" id="m-flag"></span>
+            <div>
+              <div class="modal-code" id="m-code"></div>
+              <div class="modal-fullname" id="m-fullname"></div>
+            </div>
+          </div>
+          <button class="modal-close" onclick="closeModal(null, true)">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc" id="m-desc"></p>
+          <div class="modal-section-label" id="m-buy-label">
+            🛒 Melhores sites para comprar
+          </div>
+          <div class="sites-grid" id="m-sites"></div>
+          <div class="modal-warning" id="m-warning"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span data-i18n="footerData">Dados:</span>
+      <a href="https://www.exchangerate-api.com" target="_blank"
+        >ExchangeRate-API</a
+      >
+      &amp; <a href="https://www.coingecko.com" target="_blank">CoinGecko</a> —
+      <span data-i18n="footerNote"
+        >Atualização automática a cada 10s · Apenas para fins informativos</span
+      >
+    </footer>
+
+    <script>
+      /* ══════════════════════════════════════════
+   TRANSLATIONS
+══════════════════════════════════════════ */
+      const T = {
+        pt: {
+          live: "DADOS AO VIVO",
+          waiting: "Aguardando dados…",
+          updatedAt: "Atualizado em:",
+          tickerLoading: "Carregando cotações…",
+          base: "BASE:",
+          refresh: "Atualizar",
+          fiatTitle: "Moedas Fiduciárias",
+          cryptoTitle: "Criptomoedas",
+          tableTitle: "Tabela de Cotações",
+          thAsset: "ATIVO",
+          thName: "NOME COMPLETO",
+          thPrice: "PREÇO",
+          th24h: "VAR. 24H",
+          thLow: "MÍN 24H",
+          thHigh: "MÁX 24H",
+          thType: "TIPO",
+          loading: "Carregando…",
+          noChange: "sem variação anterior",
+          statLow: "MÍN 24H",
+          statHigh: "MÁX 24H",
+          statSource: "FONTE",
+          cardHint: "clique para detalhes →",
+          modalBuy: "🛒 Melhores sites para comprar",
+          modalWarning:
+            "<strong>⚠ Aviso:</strong> As cotações são apenas informativas. Sempre compare taxas e IOF antes de comprar. Plataformas internacionais podem exigir verificação de identidade.",
+          footerData: "Dados:",
+          footerNote:
+            "Atualização automática a cada 10s · Apenas para fins informativos",
+          tagBR: "BRASIL",
+          tagINT: "INTERNACIONAL",
+          tagTOP: "RECOMENDADO",
+          themeBtnLight: "Light",
+          themeBtnDark: "Dark",
+          langBtn: "EN",
+          fiatBadge: "FIAT",
+          cryptoBadge: "CRYPTO",
+          errorPrefix: "⚠ Falha ao carregar dados",
+        },
+        en: {
+          live: "LIVE DATA",
+          waiting: "Waiting for data…",
+          updatedAt: "Updated at:",
+          tickerLoading: "Loading quotes…",
+          base: "BASE:",
+          refresh: "Refresh",
+          fiatTitle: "Fiat Currencies",
+          cryptoTitle: "Cryptocurrencies",
+          tableTitle: "Exchange Rate Table",
+          thAsset: "ASSET",
+          thName: "FULL NAME",
+          thPrice: "PRICE",
+          th24h: "24H CHG",
+          thLow: "24H LOW",
+          thHigh: "24H HIGH",
+          thType: "TYPE",
+          loading: "Loading…",
+          noChange: "no previous change",
+          statLow: "24H LOW",
+          statHigh: "24H HIGH",
+          statSource: "SOURCE",
+          cardHint: "click for details →",
+          modalBuy: "🛒 Best sites to buy",
+          modalWarning:
+            "<strong>⚠ Notice:</strong> Quotes are for informational purposes only. Always compare fees and taxes before buying. International platforms may require identity verification.",
+          footerData: "Data:",
+          footerNote:
+            "Auto-refresh every 10s · For informational purposes only",
+          tagBR: "BRAZIL",
+          tagINT: "INTERNATIONAL",
+          tagTOP: "RECOMMENDED",
+          themeBtnLight: "Light",
+          themeBtnDark: "Dark",
+          langBtn: "PT",
+          fiatBadge: "FIAT",
+          cryptoBadge: "CRYPTO",
+          errorPrefix: "⚠ Failed to load data",
+        },
+      };
+
+      /* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+      let lang = localStorage.getItem("mp_lang") || "pt";
+      let theme = localStorage.getItem("mp_theme") || "dark";
+      let baseCurrency = "BRL";
+      let fiatData = {};
+      let cryptoData = {};
+      let prevFiat = {};
+      let prevCrypto = {};
+      let autoTimer = null;
+
+      /* ══════════════════════════════════════════
+   THEME
+══════════════════════════════════════════ */
+      function applyTheme(t) {
+        theme = t;
+        localStorage.setItem("mp_theme", t);
+        const btn = document.getElementById("theme-btn");
+        const icon = document.getElementById("theme-icon");
+        const label = document.getElementById("theme-label");
+        if (t === "light") {
+          document.body.classList.add("light");
+          icon.textContent = "🌙";
+          label.textContent = T[lang].themeBtnDark;
+          btn.classList.add("is-light");
+        } else {
+          document.body.classList.remove("light");
+          icon.textContent = "☀️";
+          label.textContent = T[lang].themeBtnLight;
+          btn.classList.remove("is-light");
+        }
+      }
+      function toggleTheme() {
+        applyTheme(theme === "dark" ? "light" : "dark");
+      }
+
+      /* ══════════════════════════════════════════
+   LANGUAGE
+══════════════════════════════════════════ */
+      function applyLang(l) {
+        lang = l;
+        localStorage.setItem("mp_lang", l);
+        document.getElementById("html-root").lang = l === "pt" ? "pt-BR" : "en";
+        document.title =
+          l === "pt"
+            ? "MARKET PULSE — Cotações ao Vivo"
+            : "MARKET PULSE — Live Quotes";
+
+        const langBtn = document.getElementById("lang-btn");
+        document.getElementById("lang-label").textContent = T[l].langBtn;
+        if (l === "en") langBtn.classList.add("is-en");
+        else langBtn.classList.remove("is-en");
+
+        // translate static elements
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (T[l][key] !== undefined) el.textContent = T[l][key];
+        });
+
+        // update last-update if still waiting
+        const upd = document.getElementById("last-update");
+        if (
+          upd.textContent.startsWith("Aguard") ||
+          upd.textContent.startsWith("Wait")
+        ) {
+          upd.textContent = T[l].waiting;
+        }
+
+        // update theme button label
+        document.getElementById("theme-label").textContent =
+          theme === "light" ? T[l].themeBtnDark : T[l].themeBtnLight;
+
+        // update modal if open
+        document.getElementById("m-warning").innerHTML = T[l].modalWarning;
+        document.getElementById("m-buy-label").textContent = T[l].modalBuy;
+
+        // re-render cards/table with new language strings
+        if (Object.keys(fiatData).length) {
+          renderFiatCards();
+          renderCryptoCards();
+          renderTable();
+        }
+      }
+      function toggleLang() {
+        applyLang(lang === "pt" ? "en" : "pt");
+      }
+
+      /* ══════════════════════════════════════════
+   CURRENCY META
+══════════════════════════════════════════ */
+      const FIAT_TARGETS = [
+        "USD",
+        "EUR",
+        "GBP",
+        "JPY",
+        "CAD",
+        "ARS",
+        "CHF",
+        "CNY",
+      ];
+      const FIAT_META = {
+        USD: {
+          name_pt: "Dólar Americano",
+          name_en: "US Dollar",
+          flag: "🇺🇸",
+          accent: "0,255,163",
+        },
+        EUR: {
+          name_pt: "Euro",
+          name_en: "Euro",
+          flag: "🇪🇺",
+          accent: "77,159,255",
+        },
+        GBP: {
+          name_pt: "Libra Esterlina",
+          name_en: "British Pound",
+          flag: "🇬🇧",
+          accent: "255,184,0",
+        },
+        JPY: {
+          name_pt: "Iene Japonês",
+          name_en: "Japanese Yen",
+          flag: "🇯🇵",
+          accent: "255,61,110",
+        },
+        CAD: {
+          name_pt: "Dólar Canadense",
+          name_en: "Canadian Dollar",
+          flag: "🇨🇦",
+          accent: "255,120,60",
+        },
+        ARS: {
+          name_pt: "Peso Argentino",
+          name_en: "Argentine Peso",
+          flag: "🇦🇷",
+          accent: "100,200,255",
+        },
+        CHF: {
+          name_pt: "Franco Suíço",
+          name_en: "Swiss Franc",
+          flag: "🇨🇭",
+          accent: "255,90,130",
+        },
+        CNY: {
+          name_pt: "Yuan Chinês",
+          name_en: "Chinese Yuan",
+          flag: "🇨🇳",
+          accent: "255,60,60",
+        },
+        BRL: {
+          name_pt: "Real Brasileiro",
+          name_en: "Brazilian Real",
+          flag: "🇧🇷",
+          accent: "0,210,120",
+        },
+      };
+      const CRYPTO_IDS = ["bitcoin", "ethereum", "solana", "binancecoin"];
+      const CRYPTO_META = {
+        bitcoin: {
+          code: "BTC",
+          name_pt: "Bitcoin",
+          name_en: "Bitcoin",
+          flag: "₿",
+          accent: "255,184,0",
+        },
+        ethereum: {
+          code: "ETH",
+          name_pt: "Ethereum",
+          name_en: "Ethereum",
+          flag: "Ξ",
+          accent: "150,120,255",
+        },
+        solana: {
+          code: "SOL",
+          name_pt: "Solana",
+          name_en: "Solana",
+          flag: "◎",
+          accent: "0,255,200",
+        },
+        binancecoin: {
+          code: "BNB",
+          name_pt: "BNB",
+          name_en: "BNB",
+          flag: "B",
+          accent: "255,210,0",
+        },
+      };
+
+      /* ══════════════════════════════════════════
+   CURRENCY INFO (PT + EN)
+══════════════════════════════════════════ */
+      const CURRENCY_INFO = {
+        USD: {
+          desc_pt:
+            "O Dólar Americano (USD) é a moeda de reserva global e a mais negociada do mundo. Emitido pelo Federal Reserve dos EUA, é referência para commodities como petróleo e ouro. Sua força influencia diretamente a economia brasileira e o câmbio do Real.",
+          desc_en:
+            "The US Dollar (USD) is the world's primary reserve currency and the most traded globally. Issued by the Federal Reserve, it benchmarks commodities like oil and gold, directly influencing the Brazilian Real exchange rate.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Câmbio justo sem taxas escondidas",
+              desc_en: "Fair rate, no hidden fees",
+              tag: "int",
+            },
+            {
+              name: "Nomad",
+              url: "https://nomadglobal.com",
+              desc_pt: "Conta global em dólar para brasileiros",
+              desc_en: "Global dollar account for Brazilians",
+              tag: "br",
+            },
+            {
+              name: "Remessa Online",
+              url: "https://www.remessaonline.com.br",
+              desc_pt: "Transferências com IOF reduzido",
+              desc_en: "Transfers with reduced taxes",
+              tag: "br",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Câmbio físico com entrega em casa",
+              desc_en: "Physical currency with home delivery",
+              tag: "br",
+            },
+            {
+              name: "Banco do Brasil",
+              url: "https://www.bb.com.br",
+              desc_pt: "Câmbio oficial com segurança bancária",
+              desc_en: "Official exchange with banking security",
+              tag: "br",
+            },
+            {
+              name: "Western Union",
+              url: "https://www.westernunion.com/br",
+              desc_pt: "Rede global de câmbio",
+              desc_en: "Global money transfer network",
+              tag: "int",
+            },
+          ],
+        },
+        EUR: {
+          desc_pt:
+            "O Euro (EUR) é a moeda oficial de 20 países da União Europeia e a segunda mais negociada do mundo. Gerenciado pelo Banco Central Europeu, é amplamente usado em comércio internacional e viagens pela Europa.",
+          desc_en:
+            "The Euro (EUR) is the official currency of 20 EU countries and the second most traded currency globally. Managed by the European Central Bank, it is widely used in international trade and European travel.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Taxa interbancária real",
+              desc_en: "Real interbank rate, transparent",
+              tag: "int",
+            },
+            {
+              name: "Remessa Online",
+              url: "https://www.remessaonline.com.br",
+              desc_pt: "Melhor taxa para envio ao exterior",
+              desc_en: "Best rate for international transfers",
+              tag: "br",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Euro em espécie entregue em casa",
+              desc_en: "Euro cash delivered to your home",
+              tag: "br",
+            },
+            {
+              name: "Cotação",
+              url: "https://www.cotacao.com.br",
+              desc_pt: "Corretora credenciada pelo Bacen",
+              desc_en: "Bacen-accredited exchange broker",
+              tag: "br",
+            },
+            {
+              name: "Revolut",
+              url: "https://www.revolut.com/pt-BR",
+              desc_pt: "Cartão multi-moeda em tempo real",
+              desc_en: "Multi-currency card in real time",
+              tag: "int",
+            },
+          ],
+        },
+        GBP: {
+          desc_pt:
+            "A Libra Esterlina (GBP) é uma das moedas mais antigas do mundo e a moeda oficial do Reino Unido. É a quarta mais negociada globalmente e mantém valor historicamente alto frente ao Real.",
+          desc_en:
+            "The British Pound (GBP) is one of the oldest currencies in the world and the official currency of the UK. It is the fourth most traded currency globally, holding a historically high value against the Brazilian Real.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Câmbio real sem taxas ocultas",
+              desc_en: "Real rate, no hidden charges",
+              tag: "int",
+            },
+            {
+              name: "Remessa Online",
+              url: "https://www.remessaonline.com.br",
+              desc_pt: "Envio rápido para o Reino Unido",
+              desc_en: "Fast transfers to the UK",
+              tag: "br",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Libra em espécie com entrega",
+              desc_en: "GBP cash with home delivery",
+              tag: "br",
+            },
+            {
+              name: "Revolut",
+              url: "https://www.revolut.com/pt-BR",
+              desc_pt: "Conta em GBP sem surpresas",
+              desc_en: "GBP account, no surprise fees",
+              tag: "int",
+            },
+          ],
+        },
+        JPY: {
+          desc_pt:
+            'O Iene Japonês (JPY) é a terceira moeda mais negociada do mundo. Considerado "porto seguro" em crises, é muito usado como proteção contra volatilidade por investidores globais.',
+          desc_en:
+            'The Japanese Yen (JPY) is the third most traded currency in the world. Considered a "safe haven" during crises, it is widely used as a hedge against market volatility by global investors.',
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Transferência direta para o Japão",
+              desc_en: "Direct transfer to Japan",
+              tag: "int",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Iene em espécie para viagem",
+              desc_en: "Yen cash for travel",
+              tag: "br",
+            },
+            {
+              name: "Cotação",
+              url: "https://www.cotacao.com.br",
+              desc_pt: "Corretora autorizada Bacen",
+              desc_en: "Bacen-authorized exchange",
+              tag: "br",
+            },
+          ],
+        },
+        CAD: {
+          desc_pt:
+            "O Dólar Canadense (CAD) está fortemente ligado ao preço do petróleo. É popular entre brasileiros que emigram ou estudam no Canadá, sendo uma das moedas mais procuradas por remessas.",
+          desc_en:
+            "The Canadian Dollar (CAD) is closely tied to oil prices. It is popular among Brazilians emigrating or studying in Canada, making it one of the most sought-after currencies for remittances.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Câmbio transparente para o Canadá",
+              desc_en: "Transparent exchange to Canada",
+              tag: "int",
+            },
+            {
+              name: "Remessa Online",
+              url: "https://www.remessaonline.com.br",
+              desc_pt: "Envio de remessas com baixo custo",
+              desc_en: "Low-cost international remittances",
+              tag: "br",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Dólar canadense em espécie",
+              desc_en: "CAD cash available",
+              tag: "br",
+            },
+            {
+              name: "XE Money",
+              url: "https://www.xe.com/xemoneytransfer",
+              desc_pt: "Transferências globais confiáveis",
+              desc_en: "Trusted global transfers",
+              tag: "int",
+            },
+          ],
+        },
+        ARS: {
+          desc_pt:
+            'O Peso Argentino (ARS) enfrenta alta inflação histórica. O câmbio oficial difere do paralelo ("dólar blue"). Para viagens, é comum trocar dólares no destino para obter melhor taxa.',
+          desc_en:
+            'The Argentine Peso (ARS) faces historically high inflation. The official rate differs from the parallel "blue dollar" rate. For trips, it is common to exchange dollars at the destination for a better rate.',
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Câmbio com taxa transparente",
+              desc_en: "Transparent exchange rate",
+              tag: "int",
+            },
+            {
+              name: "Western Union",
+              url: "https://www.westernunion.com/br",
+              desc_pt: "Envio para a Argentina",
+              desc_en: "Send money to Argentina",
+              tag: "int",
+            },
+            {
+              name: "Remessa Online",
+              url: "https://www.remessaonline.com.br",
+              desc_pt: "Transferência com rastreamento",
+              desc_en: "Trackable transfers",
+              tag: "br",
+            },
+          ],
+        },
+        CHF: {
+          desc_pt:
+            "O Franco Suíço (CHF) é considerado um dos mais estáveis do mundo. Sinônimo de segurança financeira, a Suíça é referência em sistema bancário e reservas de ouro.",
+          desc_en:
+            "The Swiss Franc (CHF) is considered one of the most stable currencies in the world. Synonymous with financial security, Switzerland is a reference in banking systems and gold reserves.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Taxa real sem IOF extra",
+              desc_en: "Real rate, no extra taxes",
+              tag: "int",
+            },
+            {
+              name: "Ourominas",
+              url: "https://www.ourominas.com",
+              desc_pt: "Franco suíço em espécie",
+              desc_en: "CHF cash available",
+              tag: "br",
+            },
+            {
+              name: "Cotação",
+              url: "https://www.cotacao.com.br",
+              desc_pt: "Corretora autorizada pelo Bacen",
+              desc_en: "Bacen-authorized broker",
+              tag: "br",
+            },
+          ],
+        },
+        CNY: {
+          desc_pt:
+            "O Yuan Chinês (CNY), também chamado Renminbi, é a moeda oficial da China. Com o crescimento econômico chinês, tornou-se cada vez mais relevante no comércio global.",
+          desc_en:
+            "The Chinese Yuan (CNY), also called Renminbi, is China's official currency. With China's economic growth, it has become increasingly relevant in global trade.",
+          sites: [
+            {
+              name: "Wise",
+              url: "https://wise.com/br",
+              desc_pt: "Envio para a China com boa taxa",
+              desc_en: "Transfers to China at a fair rate",
+              tag: "int",
+            },
+            {
+              name: "Banco do Brasil",
+              url: "https://www.bb.com.br",
+              desc_pt: "Câmbio oficial com suporte",
+              desc_en: "Official exchange with support",
+              tag: "br",
+            },
+            {
+              name: "Western Union",
+              url: "https://www.westernunion.com/br",
+              desc_pt: "Rede de câmbio global",
+              desc_en: "Global exchange network",
+              tag: "int",
+            },
+            {
+              name: "OFX",
+              url: "https://www.ofx.com/pt-br",
+              desc_pt: "Especialista em câmbio internacional",
+              desc_en: "International exchange specialist",
+              tag: "int",
+            },
+          ],
+        },
+        bitcoin: {
+          desc_pt:
+            'O Bitcoin (BTC) é a primeira e mais valiosa criptomoeda do mundo, criada em 2009 por Satoshi Nakamoto. Funciona em blockchain descentralizada sem controle de bancos ou governos. É visto como "ouro digital" por muitos investidores.',
+          desc_en:
+            'Bitcoin (BTC) is the world\'s first and most valuable cryptocurrency, created in 2009 by Satoshi Nakamoto. It operates on a decentralized blockchain with no bank or government control, often called "digital gold" by investors.',
+          sites: [
+            {
+              name: "Binance",
+              url: "https://www.binance.com/pt-BR",
+              desc_pt: "Maior exchange do mundo por volume",
+              desc_en: "World's largest exchange by volume",
+              tag: "top",
+            },
+            {
+              name: "Mercado Bitcoin",
+              url: "https://www.mercadobitcoin.com.br",
+              desc_pt: "Maior corretora de cripto do Brasil",
+              desc_en: "Brazil's largest crypto broker",
+              tag: "br",
+            },
+            {
+              name: "Coinbase",
+              url: "https://www.coinbase.com",
+              desc_pt: "Exchange americana regulamentada",
+              desc_en: "US-regulated exchange",
+              tag: "int",
+            },
+            {
+              name: "Foxbit",
+              url: "https://foxbit.com.br",
+              desc_pt: "Corretora brasileira desde 2014",
+              desc_en: "Brazilian broker since 2014",
+              tag: "br",
+            },
+            {
+              name: "Bitso",
+              url: "https://bitso.com/pt",
+              desc_pt: "Exchange popular na América Latina",
+              desc_en: "Popular exchange in Latin America",
+              tag: "br",
+            },
+            {
+              name: "Kraken",
+              url: "https://www.kraken.com",
+              desc_pt: "Exchange com forte segurança",
+              desc_en: "Exchange known for strong security",
+              tag: "int",
+            },
+          ],
+        },
+        ethereum: {
+          desc_pt:
+            "O Ethereum (ETH) é a segunda maior criptomoeda por capitalização. É uma plataforma para contratos inteligentes e DApps, base das finanças descentralizadas (DeFi) e dos NFTs.",
+          desc_en:
+            "Ethereum (ETH) is the second-largest cryptocurrency by market cap. It is a platform for smart contracts and DApps, forming the backbone of most DeFi applications and NFTs.",
+          sites: [
+            {
+              name: "Binance",
+              url: "https://www.binance.com/pt-BR",
+              desc_pt: "Maior volume de ETH negociado",
+              desc_en: "Highest ETH trading volume",
+              tag: "top",
+            },
+            {
+              name: "Mercado Bitcoin",
+              url: "https://www.mercadobitcoin.com.br",
+              desc_pt: "Compra de ETH com Real",
+              desc_en: "Buy ETH with Brazilian Real",
+              tag: "br",
+            },
+            {
+              name: "Coinbase",
+              url: "https://www.coinbase.com",
+              desc_pt: "Plataforma amigável para iniciantes",
+              desc_en: "Beginner-friendly platform",
+              tag: "int",
+            },
+            {
+              name: "Foxbit",
+              url: "https://foxbit.com.br",
+              desc_pt: "Corretora brasileira regulamentada",
+              desc_en: "Regulated Brazilian broker",
+              tag: "br",
+            },
+            {
+              name: "OKX",
+              url: "https://www.okx.com/pt-br",
+              desc_pt: "Exchange global com baixas taxas",
+              desc_en: "Global exchange with low fees",
+              tag: "int",
+            },
+          ],
+        },
+        solana: {
+          desc_pt:
+            "Solana (SOL) é uma blockchain de alto desempenho capaz de processar milhares de transações por segundo a custos muito baixos. É a escolha preferida para DeFi, NFTs e jogos Web3.",
+          desc_en:
+            "Solana (SOL) is a high-performance blockchain capable of processing thousands of transactions per second at very low cost. It is the preferred choice for DeFi, NFTs and Web3 gaming.",
+          sites: [
+            {
+              name: "Binance",
+              url: "https://www.binance.com/pt-BR",
+              desc_pt: "Maior liquidez para SOL",
+              desc_en: "Highest SOL liquidity",
+              tag: "top",
+            },
+            {
+              name: "Mercado Bitcoin",
+              url: "https://www.mercadobitcoin.com.br",
+              desc_pt: "Compra de SOL em reais",
+              desc_en: "Buy SOL with Brazilian Real",
+              tag: "br",
+            },
+            {
+              name: "Coinbase",
+              url: "https://www.coinbase.com",
+              desc_pt: "Interface simples para comprar SOL",
+              desc_en: "Simple interface to buy SOL",
+              tag: "int",
+            },
+            {
+              name: "Bybit",
+              url: "https://www.bybit.com/pt-BR",
+              desc_pt: "Exchange com produtos avançados",
+              desc_en: "Exchange with advanced trading tools",
+              tag: "int",
+            },
+            {
+              name: "OKX",
+              url: "https://www.okx.com/pt-br",
+              desc_pt: "Exchange global regulamentada",
+              desc_en: "Regulated global exchange",
+              tag: "int",
+            },
+          ],
+        },
+        binancecoin: {
+          desc_pt:
+            "O BNB é a criptomoeda nativa da Binance, a maior exchange do mundo. Usado para pagar taxas com desconto, participar de lançamentos (IEOs) e alimentar a BNB Smart Chain (BEP-20).",
+          desc_en:
+            "BNB is the native cryptocurrency of Binance, the world's largest exchange. Used to pay fees at a discount, join token launches (IEOs), and power the BNB Smart Chain (BEP-20).",
+          sites: [
+            {
+              name: "Binance",
+              url: "https://www.binance.com/pt-BR",
+              desc_pt: "Exchange original — melhor preço",
+              desc_en: "Original exchange — best price",
+              tag: "top",
+            },
+            {
+              name: "Mercado Bitcoin",
+              url: "https://www.mercadobitcoin.com.br",
+              desc_pt: "Compra de BNB com Real",
+              desc_en: "Buy BNB with Brazilian Real",
+              tag: "br",
+            },
+            {
+              name: "Coinbase",
+              url: "https://www.coinbase.com",
+              desc_pt: "Exchange americana regulamentada",
+              desc_en: "US-regulated exchange",
+              tag: "int",
+            },
+            {
+              name: "OKX",
+              url: "https://www.okx.com/pt-br",
+              desc_pt: "Boa liquidez para BNB",
+              desc_en: "Good BNB liquidity",
+              tag: "int",
+            },
+          ],
+        },
+      };
+
+      /* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
+      const fmt = (n, d = 2) =>
+        n == null || isNaN(n)
+          ? "—"
+          : Number(n).toLocaleString("pt-BR", {
+              minimumFractionDigits: d,
+              maximumFractionDigits: d,
+            });
+      const sym = (c) =>
+        ({
+          BRL: "R$",
+          USD: "US$",
+          EUR: "€",
+          GBP: "£",
+          JPY: "¥",
+          CAD: "CA$",
+          ARS: "$",
+          CHF: "CHF",
+          CNY: "¥",
+        })[c] || c;
+      const chClass = (v, p) =>
+        p == null
+          ? "change-neutral"
+          : v > p
+            ? "change-up"
+            : v < p
+              ? "change-down"
+              : "change-neutral";
+      const chArrow = (v, p) =>
+        p == null ? "" : v > p ? "▲ " : v < p ? "▼ " : "";
+      const chPct = (v, p) => {
+        if (p == null || p === 0) return "";
+        const r = ((v - p) / p) * 100;
+        return (r >= 0 ? "+" : "") + r.toFixed(3) + "%";
+      };
+      const nowStr = () =>
+        new Date().toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      const mName = (m) => (lang === "en" ? m.name_en || m.name_pt : m.name_pt);
+      const tagLbl = (t) =>
+        t === "br"
+          ? T[lang].tagBR
+          : t === "top"
+            ? T[lang].tagTOP
+            : T[lang].tagINT;
+
+      /* ══════════════════════════════════════════
+   SKELETONS
+══════════════════════════════════════════ */
+      function renderSkeletons(id, n) {
+        document.getElementById(id).innerHTML = Array.from(
+          { length: n },
+          () => `
+    <div class="card" style="--card-accent:rgba(255,255,255,0.1)">
+      <div class="card-header"><div class="card-flag-name">
+        <div class="skeleton" style="width:28px;height:28px;border-radius:4px"></div>
+        <div><div class="skeleton" style="width:50px;margin-bottom:4px"></div><div class="skeleton" style="width:90px;height:0.65em"></div></div>
+      </div></div>
+      <div class="skeleton" style="width:120px;height:1.5em;margin-bottom:8px"></div>
+      <div class="skeleton" style="width:80px;height:0.75em"></div>
+      <div class="card-extra">
+        <div class="card-stat"><div class="skeleton" style="width:60px"></div></div>
+        <div class="card-stat"><div class="skeleton" style="width:60px"></div></div>
+      </div>
+    </div>`,
+        ).join("");
+      }
+
+      /* ══════════════════════════════════════════
+   FIAT CARDS
+══════════════════════════════════════════ */
+      function renderFiatCards() {
+        const c = document.getElementById("fiat-cards");
+        const s = sym(baseCurrency);
+        const rates = fiatData.rates || {};
+        const t = T[lang];
+        c.innerHTML = FIAT_TARGETS.filter((x) => x !== baseCurrency)
+          .map((code, i) => {
+            const m = FIAT_META[code] || {
+              name_pt: code,
+              name_en: code,
+              flag: "🌐",
+              accent: "200,200,200",
+            };
+            const rate = rates[code],
+              prev = prevFiat[code];
+            const cls = chClass(rate, prev),
+              arrow = chArrow(rate, prev),
+              pct = chPct(rate, prev);
+            const dec = ["JPY", "ARS"].includes(code) ? 2 : 4;
+            const inv = rate ? 1 / rate : null;
+            const name = mName(m);
+            return `<div class="card" style="--card-accent:rgb(${m.accent});--card-accent-rgb:${m.accent};animation-delay:${i * 0.07}s"
+          onclick="openModal('${code}','${m.flag}','${code}','${name}','${m.accent}')">
+      <span class="card-hint">${t.cardHint}</span>
+      <div class="card-header">
+        <div class="card-flag-name">
+          <span class="card-flag">${m.flag}</span>
+          <div><div class="card-code">${code}</div><div class="card-fullname">${name}</div></div>
+        </div>
+        <span class="card-badge badge-fiat">${t.fiatBadge}</span>
+      </div>
+      <div class="card-value"><span class="currency-sym">${s}</span>${rate != null ? fmt(rate, dec) : "—"}</div>
+      <div class="card-change ${cls}">${pct ? arrow + pct : '<span style="color:var(--text-dim)">' + t.noChange + "</span>"}</div>
+      <div class="card-extra">
+        <div class="card-stat"><div class="stat-label">1 ${code} =</div><div class="stat-value">${inv != null ? fmt(inv, 4) + " " + baseCurrency : "—"}</div></div>
+        <div class="card-stat"><div class="stat-label">${t.statSource}</div><div class="stat-value">ExchangeRate</div></div>
+      </div>
+    </div>`;
+          })
+          .join("");
+      }
+
+      /* ══════════════════════════════════════════
+   CRYPTO CARDS
+══════════════════════════════════════════ */
+      function renderCryptoCards() {
+        const c = document.getElementById("crypto-cards");
+        const base = baseCurrency.toLowerCase();
+        const s = sym(baseCurrency);
+        const t = T[lang];
+        c.innerHTML = CRYPTO_IDS.map((id, i) => {
+          const m = CRYPTO_META[id],
+            d = cryptoData[id] || {};
+          const price = d[base],
+            ch24 = d["usd_24h_change"];
+          const high24 = d[`${base}_24h_high`] || null,
+            low24 = d[`${base}_24h_low`] || null;
+          const prev = prevCrypto[id]?.[base];
+          const cls = chClass(price, prev);
+          const pct =
+            ch24 != null
+              ? (ch24 >= 0 ? "+" : "") + ch24.toFixed(2) + "% (24h)"
+              : chPct(price, prev);
+          const name = mName(m);
+          return `<div class="card" style="--card-accent:rgb(${m.accent});--card-accent-rgb:${m.accent};animation-delay:${i * 0.07}s"
+          onclick="openModal('${id}','${m.flag}','${m.code}','${name}','${m.accent}')">
+      <span class="card-hint">${t.cardHint}</span>
+      <div class="card-header">
+        <div class="card-flag-name">
+          <span class="card-flag" style="font-size:1.15rem;font-family:monospace">${m.flag}</span>
+          <div><div class="card-code">${m.code}</div><div class="card-fullname">${name}</div></div>
+        </div>
+        <span class="card-badge badge-crypto">${t.cryptoBadge}</span>
+      </div>
+      <div class="card-value"><span class="currency-sym">${s}</span>${price != null ? fmt(price, 2) : "—"}</div>
+      <div class="card-change ${ch24 != null ? (ch24 >= 0 ? "change-up" : "change-down") : cls}">
+        ${pct ? (ch24 >= 0 ? "▲ " : "▼ ") + pct : '<span style="color:var(--text-dim)">' + t.noChange + "</span>"}
+      </div>
+      <div class="card-extra">
+        <div class="card-stat"><div class="stat-label">${t.statLow}</div><div class="stat-value">${low24 ? s + " " + fmt(low24, 2) : "—"}</div></div>
+        <div class="card-stat"><div class="stat-label">${t.statHigh}</div><div class="stat-value">${high24 ? s + " " + fmt(high24, 2) : "—"}</div></div>
+      </div>
+    </div>`;
+        }).join("");
+      }
+
+      /* ══════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════ */
+      function renderTable() {
+        const tbody = document.getElementById("table-body");
+        const base = baseCurrency.toLowerCase();
+        const s = sym(baseCurrency);
+        const rates = fiatData.rates || {};
+        const t = T[lang];
+        const fiatRows = FIAT_TARGETS.filter((c) => c !== baseCurrency).map(
+          (code) => {
+            const m = FIAT_META[code] || { name_pt: code, name_en: code };
+            const price = rates[code],
+              prev = prevFiat[code];
+            const pct = chPct(price, prev);
+            const cls =
+              chClass(price, prev) === "change-up"
+                ? "up"
+                : chClass(price, prev) === "change-down"
+                  ? "down"
+                  : "";
+            const dec = ["JPY", "ARS"].includes(code) ? 2 : 4;
+            return `<tr><td><b>${code}</b></td><td>${mName(m)}</td><td class="mono">${s} ${price != null ? fmt(price, dec) : "—"}</td><td class="${cls}">${pct || "—"}</td><td>—</td><td>—</td><td style="color:var(--accent-blue)">${t.fiatBadge}</td></tr>`;
+          },
+        );
+        const cryptoRows = CRYPTO_IDS.map((id) => {
+          const m = CRYPTO_META[id],
+            d = cryptoData[id] || {};
+          const price = d[base],
+            prev = prevCrypto[id]?.[base];
+          const ch24 = d["usd_24h_change"];
+          const pct =
+            ch24 != null
+              ? (ch24 >= 0 ? "+" : "") + ch24.toFixed(2) + "%"
+              : chPct(price, prev);
+          const cls =
+            ch24 != null
+              ? ch24 >= 0
+                ? "up"
+                : "down"
+              : chClass(price, prev) === "change-up"
+                ? "up"
+                : chClass(price, prev) === "change-down"
+                  ? "down"
+                  : "";
+          const high = d[`${base}_24h_high`],
+            low = d[`${base}_24h_low`];
+          return `<tr><td><b>${m.code}</b></td><td>${mName(m)}</td><td class="mono">${s} ${price != null ? fmt(price, 2) : "—"}</td><td class="${cls}">${pct || "—"}</td><td class="mono">${low ? s + " " + fmt(low, 2) : "—"}</td><td class="mono">${high ? s + " " + fmt(high, 2) : "—"}</td><td style="color:var(--accent-amber)">${t.cryptoBadge}</td></tr>`;
+        });
+        tbody.innerHTML = [...fiatRows, ...cryptoRows].join("");
+      }
+
+      /* ══════════════════════════════════════════
+   TICKER
+══════════════════════════════════════════ */
+      function renderTicker() {
+        const base = baseCurrency.toLowerCase();
+        const rates = fiatData.rates || {};
+        const s = sym(baseCurrency);
+        const items = [];
+        ["USD", "EUR", "GBP", "JPY", "CAD", "CHF"]
+          .filter((c) => c !== baseCurrency)
+          .forEach((code) => {
+            const r = rates[code];
+            if (r == null) return;
+            const prev = prevFiat[code];
+            const cls =
+              chClass(r, prev) === "change-up"
+                ? "t-up"
+                : chClass(r, prev) === "change-down"
+                  ? "t-down"
+                  : "";
+            items.push(
+              `<div class="ticker-item"><span class="t-name">${code}/${baseCurrency}</span> <span class="${cls}">${s} ${fmt(r, code === "JPY" ? 2 : 4)}</span></div>`,
+            );
+          });
+        CRYPTO_IDS.forEach((id) => {
+          const m = CRYPTO_META[id],
+            d = cryptoData[id] || {},
+            price = d[base];
+          if (price == null) return;
+          const ch = d["usd_24h_change"];
+          const cls = ch != null ? (ch >= 0 ? "t-up" : "t-down") : "";
+          items.push(
+            `<div class="ticker-item"><span class="t-name">${m.code}</span> <span class="${cls}">${s} ${fmt(price, 2)}</span>${ch != null ? ` <span class="${cls}">(${ch >= 0 ? "+" : ""}${ch.toFixed(2)}%)</span>` : ""}</div>`,
+          );
+        });
+        if (!items.length) return;
+        document.getElementById("ticker").innerHTML = [...items, ...items].join(
+          "",
+        );
+      }
+
+      /* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+      function openModal(key, flag, code, fullname, accentRgb) {
+        const info = CURRENCY_INFO[key];
+        if (!info) return;
+        document.getElementById("m-flag").textContent = flag;
+        document.getElementById("m-code").textContent = code;
+        document.getElementById("m-fullname").textContent = fullname;
+        document.getElementById("m-desc").textContent =
+          lang === "en" ? info.desc_en : info.desc_pt;
+        document.getElementById("m-buy-label").textContent = T[lang].modalBuy;
+        document.getElementById("m-warning").innerHTML = T[lang].modalWarning;
+        const box = document.getElementById("modal-box");
+        box.style.setProperty("--modal-accent", `rgb(${accentRgb})`);
+        box.style.setProperty("--modal-accent-rgb", accentRgb);
+        document.getElementById("m-sites").innerHTML = info.sites
+          .map(
+            (s) => `
+    <a class="site-card" href="${s.url}" target="_blank" rel="noopener">
+      <div class="site-name">${s.name}</div>
+      <div class="site-desc">${lang === "en" ? s.desc_en : s.desc_pt}</div>
+      <span class="site-tag tag-${s.tag}">${tagLbl(s.tag)}</span>
+    </a>`,
+          )
+          .join("");
+        document.getElementById("modal-overlay").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal(e, force) {
+        if (
+          force ||
+          (e && e.target === document.getElementById("modal-overlay"))
+        ) {
+          document.getElementById("modal-overlay").classList.remove("open");
+          document.body.style.overflow = "";
+        }
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal(null, true);
+      });
+
+      /* ══════════════════════════════════════════
+   FETCH
+══════════════════════════════════════════ */
+      async function fetchFiat() {
+        const r = await fetch(
+          `https://api.exchangerate-api.com/v4/latest/${baseCurrency}`,
+        );
+        if (!r.ok) throw new Error(`ExchangeRate API: ${r.status}`);
+        return r.json();
+      }
+      async function fetchCrypto() {
+        const vs = [baseCurrency.toLowerCase(), "usd"].join(",");
+        const r = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${CRYPTO_IDS.join(",")}&vs_currencies=${vs}&include_24hr_change=true&include_24hr_high_low=true`,
+        );
+        if (!r.ok) throw new Error(`CoinGecko API: ${r.status}`);
+        return r.json();
+      }
+
+      /* ══════════════════════════════════════════
+   MAIN LOAD
+══════════════════════════════════════════ */
+      async function loadAll() {
+        const btn = document.getElementById("refresh-btn");
+        const spin = document.getElementById("spin-icon");
+        const errEl = document.getElementById("error-msg");
+        btn.disabled = true;
+        spin.classList.add("spinning");
+        errEl.style.display = "none";
+        renderSkeletons(
+          "fiat-cards",
+          FIAT_TARGETS.filter((c) => c !== baseCurrency).length,
+        );
+        renderSkeletons("crypto-cards", CRYPTO_IDS.length);
+        try {
+          prevFiat = Object.assign({}, fiatData.rates || {});
+          prevCrypto = JSON.parse(JSON.stringify(cryptoData));
+          const [fiat, crypto] = await Promise.all([
+            fetchFiat(),
+            fetchCrypto(),
+          ]);
+          fiatData = fiat;
+          cryptoData = crypto;
+          renderFiatCards();
+          renderCryptoCards();
+          renderTable();
+          renderTicker();
+          document.getElementById("last-update").textContent =
+            T[lang].updatedAt + " " + nowStr();
+        } catch (err) {
+          console.error(err);
+          errEl.textContent = T[lang].errorPrefix + ": " + err.message;
+          errEl.style.display = "block";
+        } finally {
+          btn.disabled = false;
+          spin.classList.remove("spinning");
+        }
+      }
+
+      /* ══════════════════════════════════════════
+   BASE SWITCH
+══════════════════════════════════════════ */
+      document.querySelectorAll(".btn-base").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".btn-base")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          baseCurrency = btn.dataset.base;
+          fiatData = {};
+          cryptoData = {};
+          loadAll();
+        });
+      });
+
+      /* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+      applyTheme(theme);
+      applyLang(lang);
+      loadAll();
+      if (autoTimer) clearInterval(autoTimer);
+      autoTimer = setInterval(loadAll, 10_000);
+    </script>
+  </body>
+</html>
